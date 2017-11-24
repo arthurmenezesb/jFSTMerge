@@ -24,12 +24,9 @@ import de.ovgu.cide.fstgen.ast.FSTTerminal;
  *
  */
 public final class RenamingOrDeletionConflictsHandler {
-
-	static int idMerge = 1;
 	
 	public static void handle(MergeContext context) {
 		boolean hasRenameConflict = false;
-		System.out.println("Arthur - ta no handle de rename");
 		
 		//possible renamings or deletions in left
 		if(!context.possibleRenamedLeftNodes.isEmpty() || !context.possibleRenamedRightNodes.isEmpty()){
@@ -64,14 +61,6 @@ public final class RenamingOrDeletionConflictsHandler {
 						hasRenameConflict = true;
 					} else { //do not report the renaming conflict
 						((FSTTerminal) tuple.getRight()).setBody(editedNodeContent);
-						//ARTHUR - PRINTAR A SAÍDA AQUI com o retorno do tuple.getRight()).setBody(editedNodeContent)
-						/*try {
-							//logMerge(FilesManager.indentCode(Prettyprinter.print(context.superImposedTree)));
-							logMerge(context, "");
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}*/
 					}
 				}
 			}
@@ -106,21 +95,13 @@ public final class RenamingOrDeletionConflictsHandler {
 						hasRenameConflict = true;
 					} else { //do not report the renaming conflict
 						((FSTTerminal) tuple.getRight()).setBody(editedNodeContent);
-						//ARTHUR - PRINTAR A SAÍDA AQUI com o retorno do tuple.getRight()).setBody(editedNodeContent)
-						/*try {
-							//logMerge(FilesManager.indentCode(Prettyprinter.print(context.superImposedTree)));
-							logMerge(context, "");
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}*/
 					}
 				}
 			}
 		}
 		if(hasRenameConflict) {
 			try {
-				logMerge(context, "");
+				logMerge(context);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -163,8 +144,6 @@ public final class RenamingOrDeletionConflictsHandler {
 
 	private static void generateRenamingConflict(MergeContext context,String currentNodeContent, String firstContent,String secondContent, boolean isLeftToRight) {
 		
-		System.out.println("Arthur - Chegou no generateRenamingConflict");
-		
 		if(!isLeftToRight){//managing the origin of the changes in the conflict
 			String aux 	 = secondContent;
 			secondContent= firstContent;
@@ -189,14 +168,6 @@ public final class RenamingOrDeletionConflictsHandler {
 		} else {
 			FilesManager.findAndDeleteASTNode(context.superImposedTree, secondContent);
 
-		}
-		
-		//ARTHUR - PRINTAR A SAÍDA AQUI com o newConflict
-		try {
-			//logMerge(newConflict.toString());
-			logMerge(context, newConflict.toString());
-		} catch (IOException e) {
-			
 		}
 	}
 
@@ -264,36 +235,22 @@ public final class RenamingOrDeletionConflictsHandler {
 		}
 	} */
 	
-	private static void logMerge(String mergeRenameLog) throws IOException { 
-		String logpath = System.getProperty("user.home")+ File.separator + ".jfstmerge" + File.separator;
-		new File(logpath).mkdirs(); //ensuring that the directories exists	
-		logpath = logpath + "jfstmerge.rename.scenarios";
-
-		//reading the log file to see if it is not empty neither contains the header
+	private static void logMerge(MergeContext context) throws IOException { 
+		String logpathJfstmerge = System.getProperty("user.home")+ File.separator + ".jfstmerge" + File.separator;
+		new File(logpathJfstmerge).mkdirs(); //ensuring that the directories exists
 		
-		File statisticsLog = new File(logpath);
-		if(!statisticsLog.exists()){
-			FileUtils.write(statisticsLog, "", true);
-		}
+		//remove dot (.) of filename
+		String filenameBase = context.getBase().getName().substring(1);
+		String filenameLeft = context.getLeft().getName().substring(1);
+		String filenameRight = context.getRight().getName().substring(1);
 		
-		FileUtils.write(statisticsLog, "========BEGIN RENAME Scenario ID + " + idMerge + "========\n\n", true);
+		String logpath = logpathJfstmerge + File.separator + "results" + File.separator + filenameBase + File.separator;
+		new File(logpath).mkdirs(); //ensuring that the directories exists
 		
-		FileUtils.write(statisticsLog, mergeRenameLog, true);
-		
-		FileUtils.write(statisticsLog, "\n========END RENAME Scenario ID + " + idMerge + "========\n", true);
-		
-		idMerge++;
-	}
-	
-	private static void logMerge(MergeContext context, String mergeConflict) throws IOException { 
-		String logpath = System.getProperty("user.home")+ File.separator + ".jfstmerge" + File.separator;
-		new File(logpath).mkdirs(); //ensuring that the directories exists	
-		String logpathRenameMerge = logpath + "jfstmerge.rename.merge";
-		String logpathBase = logpath + "jfstmerge.rename.base";
-		String logpathLeft = logpath + "jfstmerge.rename.left";
-		String logpathRight = logpath + "jfstmerge.rename.right";
-
-		//reading the log file to see if it is not empty neither contains the header
+		String logpathRenameMerge = logpath + filenameBase + "-rename.merge";
+		String logpathBase = logpath + filenameBase + "-rename.base";
+		String logpathLeft = logpath + filenameLeft + "-rename.left";
+		String logpathRight = logpath + filenameRight + "-rename.right";
 		
 		//MERGE
 		File fileLogRenameMerge = new File(logpathRenameMerge);
@@ -301,22 +258,12 @@ public final class RenamingOrDeletionConflictsHandler {
 			FileUtils.write(fileLogRenameMerge, "", true);
 		}
 		
-		//if(mergeConflict != "") {
-		//	FileUtils.write(fileLogRenameMerge, "========BEGIN MERGE RENAME CONFLICT Scenario ID + " + idMerge + "========\n\n", true);
-			
-		//	FileUtils.write(fileLogRenameMerge, mergeConflict, true);
-		//} else {
-			FileUtils.write(fileLogRenameMerge, "########BEGIN MERGE RENAME Scenario ID + " + idMerge + "########\n\n", true);
-			
-			String printMerge = FilesManager.indentCode(Prettyprinter.print(context.superImposedTree));
-			printMerge = printMerge.replace("<<<<<<< MINE", "");
-			printMerge = printMerge.replace("======= MINE", "");
-			printMerge = printMerge.replace(">>>>>>> YOURS", "");
-			
-			//FileUtils.write(fileLogRenameMerge, FilesManager.indentCode(Prettyprinter.print(context.superImposedTree)), true);
-			FileUtils.write(fileLogRenameMerge, printMerge, true);
-		//}
-		FileUtils.write(fileLogRenameMerge, "\n########END MERGE RENAME Scenario ID + " + idMerge + "########\n", true);
+		String printMerge = FilesManager.indentCode(Prettyprinter.print(context.superImposedTree));
+		//printMerge = printMerge.replace("<<<<<<< MINE", "");
+		//printMerge = printMerge.replace("======= MINE", "");
+		//printMerge = printMerge.replace(">>>>>>> YOURS", "");
+		
+		FileUtils.write(fileLogRenameMerge, printMerge, true);
 		
 		//BASE
 		File fileLogBase = new File(logpathBase);
@@ -324,11 +271,7 @@ public final class RenamingOrDeletionConflictsHandler {
 			FileUtils.write(fileLogBase, "", true);
 		}
 		
-		FileUtils.write(fileLogBase, "########BEGIN BASE Scenario ID + " + idMerge + "########\n\n", true);
-		
 		FileUtils.write(fileLogBase, FilesManager.indentCode(Prettyprinter.print(context.baseTree)), true);
-		
-		FileUtils.write(fileLogBase, "\n########END BASE Scenario ID + " + idMerge + "########\n", true);
 		
 		//LEFT
 		File fileLogLeft = new File(logpathLeft);
@@ -336,11 +279,7 @@ public final class RenamingOrDeletionConflictsHandler {
 			FileUtils.write(fileLogLeft, "", true);
 		}
 		
-		FileUtils.write(fileLogLeft, "########BEGIN LEFT Scenario ID + " + idMerge + "########\n\n", true);
-		
 		FileUtils.write(fileLogLeft, FilesManager.indentCode(Prettyprinter.print(context.leftTree)), true);
-		
-		FileUtils.write(fileLogLeft, "\n########END LEFT Scenario ID + " + idMerge + "########\n", true);
 		
 		//RIGHT
 		File fileLogRight = new File(logpathRight);
@@ -348,14 +287,7 @@ public final class RenamingOrDeletionConflictsHandler {
 			FileUtils.write(fileLogRight, "", true);
 		}
 		
-		FileUtils.write(fileLogRight, "########BEGIN RIGHT Scenario ID + " + idMerge + "########\n\n", true);
-		
-		FileUtils.write(fileLogRight, FilesManager.indentCode(Prettyprinter.print(context.rightTree)), true);
-		
-		FileUtils.write(fileLogRight, "\n########END RIGHT Scenario ID + " + idMerge + "########\n", true);
-		
-		idMerge++;
+		FileUtils.write(fileLogRight, FilesManager.indentCode(Prettyprinter.print(context.rightTree)), true);	
 	}
 	
-
 }
